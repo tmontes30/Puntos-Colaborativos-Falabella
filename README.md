@@ -51,6 +51,34 @@ npm run serve
 
 y abre `http://localhost:8080`.
 
+## Analítica de uso
+
+El sitio manda analítica a [GoatCounter](https://www.goatcounter.com/) (gratis,
+sin cookies, no necesita banner de consentimiento). Dashboard:
+**https://tmontes30.goatcounter.com**
+
+Se trackean automáticamente las visitas (pageviews) más estos eventos
+personalizados, útiles para medir usabilidad real:
+
+| Evento (path)                          | Cuándo se dispara                                   |
+| --------------------------------------- | ---------------------------------------------------- |
+| `/event/bodega/exitosa`                 | La búsqueda de dirección de bodega encontró resultado |
+| `/event/bodega/no-encontrada`           | Nominatim no encontró la dirección ingresada          |
+| `/event/bodega/error`                   | Falló la consulta al servicio de geocodificación      |
+| `/event/filtro/comuna/<comuna\|todas>`  | Cambio en el filtro de comuna                         |
+| `/event/filtro/activos/<on\|off>`       | Toggle de "solo puntos operativos"                    |
+| `/event/filtro/sabado/<on\|off>`        | Toggle de "solo habilitados los sábados"              |
+| `/event/punto/<codigo>`                 | Clic en un punto (desde la lista o desde el mapa)     |
+
+En el dashboard de GoatCounter, estos eventos aparecen listados junto a las
+páginas normales (activa "Include" para ver eventos si no aparecen por
+defecto). Con `/event/punto/<codigo>` puedes ver un ranking de qué puntos
+colaborativos consultan más los sellers, y con los eventos de bodega puedes
+medir qué tan seguido falla la búsqueda de direcciones.
+
+Si alguna vez necesitas cambiar de cuenta/sitio, el único lugar a editar es
+la etiqueta `<script data-goatcounter="...">` en `index.html`.
+
 ## Publicar en GitHub Pages
 
 1. Crea un repositorio vacío en GitHub.

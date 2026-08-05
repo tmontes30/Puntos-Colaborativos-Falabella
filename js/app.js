@@ -31,6 +31,12 @@
   const bodegaStatus = document.getElementById("bodega-status");
   const itemTemplate = document.getElementById("point-item-template");
 
+  function trackEvent(path) {
+    if (window.goatcounter && typeof window.goatcounter.count === "function") {
+      window.goatcounter.count({ path, event: true });
+    }
+  }
+
   function abiertoSabado(diasStr) {
     const normalizado = String(diasStr || "")
       .normalize("NFD")
@@ -104,6 +110,7 @@
         icon: point.activo ? pointIcon : pointIconInactive,
       }).addTo(map);
       marker.bindPopup(popupHtml(point));
+      marker.on("click", () => trackEvent(`/event/punto/${point.codigo}`));
       state.markers.set(point.codigo, marker);
     });
   }
@@ -157,6 +164,7 @@
         if (!marker) return;
         map.setView(marker.getLatLng(), 15, { animate: true });
         marker.openPopup();
+        trackEvent(`/event/punto/${point.codigo}`);
       };
       li.addEventListener("click", focusPoint);
       li.addEventListener("keypress", (e) => {
@@ -222,12 +230,15 @@
       const coords = await geocodeBodega(address);
       if (!coords) {
         setStatus("No pudimos encontrar esa dirección. Intenta agregar comuna o revisa la ortografía.", "error");
+        trackEvent("/event/bodega/no-encontrada");
         return;
       }
       setBodega(coords, address);
       setStatus(`Bodega ubicada. Mostrando distancias desde: ${address}`, "success");
+      trackEvent("/event/bodega/exitosa");
     } catch (err) {
       setStatus("Ocurrió un error al buscar la dirección. Intenta nuevamente en unos segundos.", "error");
+      trackEvent("/event/bodega/error");
     } finally {
       bodegaSubmit.disabled = false;
     }
@@ -236,16 +247,19 @@
   comunaSelect.addEventListener("change", () => {
     state.filters.comuna = comunaSelect.value;
     refresh();
+    trackEvent(`/event/filtro/comuna/${comunaSelect.value || "todas"}`);
   });
 
   activosCheckbox.addEventListener("change", () => {
     state.filters.soloActivos = activosCheckbox.checked;
     refresh();
+    trackEvent(`/event/filtro/activos/${activosCheckbox.checked ? "on" : "off"}`);
   });
 
   sabadoCheckbox.addEventListener("change", () => {
     state.filters.soloSabado = sabadoCheckbox.checked;
     refresh();
+    trackEvent(`/event/filtro/sabado/${sabadoCheckbox.checked ? "on" : "off"}`);
   });
 
   async function init() {
