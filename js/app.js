@@ -72,16 +72,27 @@
     }[c]));
   }
 
+  const pointIcon = L.icon({
+    iconUrl: "assets/falabella-icon.png",
+    iconSize: [28, 29],
+    iconAnchor: [14, 29],
+    popupAnchor: [0, -26],
+    className: "point-marker-icon",
+  });
+
+  const pointIconInactive = L.icon({
+    iconUrl: "assets/falabella-icon.png",
+    iconSize: [28, 29],
+    iconAnchor: [14, 29],
+    popupAnchor: [0, -26],
+    className: "point-marker-icon point-marker-icon--inactive",
+  });
+
   function buildMarkers() {
     state.points.forEach((point) => {
       if (point.lat == null || point.lng == null) return;
-      const color = point.activo ? "#16a34a" : "#9ca3af";
-      const marker = L.circleMarker([point.lat, point.lng], {
-        radius: 8,
-        color: "#ffffff",
-        weight: 2,
-        fillColor: color,
-        fillOpacity: 0.95,
+      const marker = L.marker([point.lat, point.lng], {
+        icon: point.activo ? pointIcon : pointIconInactive,
       }).addTo(map);
       marker.bindPopup(popupHtml(point));
       state.markers.set(point.codigo, marker);

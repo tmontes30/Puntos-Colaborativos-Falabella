@@ -215,6 +215,16 @@ html, body {
   width: 100%;
 }
 
+.point-marker-icon {
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.point-marker-icon--inactive {
+  filter: grayscale(100%);
+  opacity: 0.65;
+}
+
 .leaflet-popup-content {
   font-size: 0.85rem;
   line-height: 1.4;
