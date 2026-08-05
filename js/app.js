@@ -9,7 +9,7 @@
     points: [],
     bodega: null, // { lat, lng, label }
     markers: new Map(), // codigo -> Leaflet marker
-    filters: { comuna: "", soloActivos: true },
+    filters: { comuna: "", soloActivos: true, soloSabado: false },
   };
 
   const map = L.map("map").setView(SANTIAGO_CENTER, 11);
@@ -24,11 +24,20 @@
   const countEl = document.getElementById("points-count");
   const comunaSelect = document.getElementById("filter-comuna");
   const activosCheckbox = document.getElementById("filter-activos");
+  const sabadoCheckbox = document.getElementById("filter-sabado");
   const bodegaForm = document.getElementById("bodega-form");
   const bodegaInput = document.getElementById("bodega-input");
   const bodegaSubmit = document.getElementById("bodega-submit");
   const bodegaStatus = document.getElementById("bodega-status");
   const itemTemplate = document.getElementById("point-item-template");
+
+  function abiertoSabado(diasStr) {
+    const normalizado = String(diasStr || "")
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase();
+    return normalizado.includes("sabado") || normalizado.includes("todos los dias");
+  }
 
   function haversineKm(lat1, lng1, lat2, lng2) {
     const R = 6371;
@@ -112,6 +121,7 @@
   function getFilteredPoints() {
     return state.points.filter((p) => {
       if (state.filters.soloActivos && !p.activo) return false;
+      if (state.filters.soloSabado && !abiertoSabado(p.dias)) return false;
       if (state.filters.comuna && p.comuna !== state.filters.comuna) return false;
       return true;
     });
@@ -230,6 +240,11 @@
 
   activosCheckbox.addEventListener("change", () => {
     state.filters.soloActivos = activosCheckbox.checked;
+    refresh();
+  });
+
+  sabadoCheckbox.addEventListener("change", () => {
+    state.filters.soloSabado = sabadoCheckbox.checked;
     refresh();
   });
 
