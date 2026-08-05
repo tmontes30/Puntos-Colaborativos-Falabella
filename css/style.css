@@ -1,0 +1,273 @@
+:root {
+  --brand: #f97316;
+  --brand-dark: #c2410c;
+  --ink: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --bg: #ffffff;
+  --bg-soft: #f9fafb;
+  --ok: #16a34a;
+  --off: #9ca3af;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar__title h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.topbar__title p {
+  margin: 0.15rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.bodega-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-grow: 1;
+  min-width: 280px;
+  max-width: 560px;
+}
+
+.bodega-form input {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.bodega-form button {
+  padding: 0.6rem 1.2rem;
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bodega-form button:hover {
+  background: var(--brand-dark);
+}
+
+.bodega-form button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.bodega-status {
+  padding: 0.6rem 1.5rem;
+  font-size: 0.9rem;
+}
+
+.bodega-status.error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.bodega-status.success {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.layout {
+  display: flex;
+  height: calc(100vh - 74px);
+}
+
+.sidebar {
+  width: 380px;
+  min-width: 280px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-soft);
+}
+
+.sidebar__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar__filters select {
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.points-count {
+  padding: 0.5rem 1rem 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.points-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.point-item {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+.point-item:hover,
+.point-item:focus {
+  border-color: var(--brand);
+  outline: none;
+}
+
+.point-item.is-inactive {
+  opacity: 0.55;
+}
+
+.point-item__header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.point-item__badge {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ok);
+  flex-shrink: 0;
+}
+
+.point-item.is-inactive .point-item__badge {
+  background: var(--off);
+}
+
+.point-item__nombre {
+  font-weight: 600;
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.point-item__distancia {
+  font-size: 0.78rem;
+  color: var(--brand-dark);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.point-item__direccion {
+  font-size: 0.82rem;
+  color: var(--ink);
+  margin-top: 0.15rem;
+}
+
+.point-item__comuna {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.map-wrap {
+  flex: 1;
+  position: relative;
+}
+
+#map {
+  height: 100%;
+  width: 100%;
+}
+
+.leaflet-popup-content {
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.popup-title {
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.popup-row {
+  margin-top: 0.25rem;
+}
+
+.popup-row strong {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.popup-recepcion-restringida {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.popup-recepcion-abierta {
+  color: var(--ok);
+  font-weight: 600;
+}
+
+@media (max-width: 800px) {
+  .layout {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .sidebar {
+    width: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 40vh;
+  }
+
+  .map-wrap {
+    flex: none;
+    height: 60vh;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bodega-form {
+    max-width: none;
+  }
+}

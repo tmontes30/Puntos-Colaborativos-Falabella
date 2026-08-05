@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mapa de Puntos Colaborativos Dropoff</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar__title">
+    <h1>Puntos Colaborativos Dropoff</h1>
+    <p>Encuentra el punto más cercano a tu bodega para dejar tus pedidos</p>
+  </div>
+  <form id="bodega-form" class="bodega-form">
+    <input
+      type="text"
+      id="bodega-input"
+      placeholder="Ingresa la dirección de tu bodega (ej: Av. Providencia 1234, Providencia)"
+      autocomplete="off"
+    />
+    <button type="submit" id="bodega-submit">Buscar</button>
+  </form>
+</header>
+
+<div id="bodega-status" class="bodega-status" hidden></div>
+
+<main class="layout">
+  <aside class="sidebar">
+    <div class="sidebar__filters">
+      <select id="filter-comuna">
+        <option value="">Todas las comunas</option>
+      </select>
+      <label class="filter-toggle">
+        <input type="checkbox" id="filter-activos" checked />
+        Solo puntos operativos
+      </label>
+    </div>
+    <div id="points-count" class="points-count"></div>
+    <ul id="points-list" class="points-list"></ul>
+  </aside>
+
+  <section class="map-wrap">
+    <div id="map"></div>
+  </section>
+</main>
+
+<template id="point-item-template">
+  <li class="point-item" tabindex="0">
+    <div class="point-item__header">
+      <span class="point-item__badge"></span>
+      <span class="point-item__nombre"></span>
+      <span class="point-item__distancia"></span>
+    </div>
+    <div class="point-item__direccion"></div>
+    <div class="point-item__comuna"></div>
+  </li>
+</template>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="js/app.js"></script>
+</body>
+</html>

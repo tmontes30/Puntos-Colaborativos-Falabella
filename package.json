@@ -1,0 +1,14 @@
+{
+  "name": "mapa-puntos-dropoff",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Generador de data/points.json a partir del Excel de puntos colaborativos dropoff",
+  "type": "commonjs",
+  "scripts": {
+    "generate-data": "node scripts/generate-data.js",
+    "serve": "python -m http.server 8080"
+  },
+  "dependencies": {
+    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
+  }
+}
