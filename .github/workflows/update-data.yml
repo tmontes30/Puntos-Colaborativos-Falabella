@@ -1,0 +1,37 @@
+name: Actualizar datos desde Google Sheets
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Generar data/points.json desde el Sheet
+        run: npm run generate-data
+
+      - name: Commit y push si hubo cambios
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- data/points.json data/geocode-cache.json; then
+            echo "Sin cambios, no se hace commit."
+          else
+            git add data/points.json data/geocode-cache.json
+            git commit -m "Actualizar puntos desde Google Sheets [automated]"
+            git push
+          fi

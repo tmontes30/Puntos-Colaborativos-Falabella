@@ -1,8 +1,13 @@
 /**
- * Lee source-data/*.xlsx, geocodifica cada dirección (Nominatim/OSM),
- * aplica data/overrides.json y escribe data/points.json.
+ * Fuente primaria: el Google Sheet en vivo del dueño (CSV export, público de
+ * solo lectura). Si no hay red/URL disponible, cae a source-data/*.xlsx como
+ * fallback para desarrollo offline.
+ *
+ * Geocodifica cada dirección (Nominatim/OSM) salvo que la fila traiga Lat/Lng
+ * propios, aplica data/overrides.json como respaldo y escribe data/points.json.
  *
  * Uso: npm run generate-data
+ * Override de fuente para testear: SHEET_CSV_URL=<otra-url> npm run generate-data
  */
 const fs = require("fs");
 const path = require("path");
@@ -13,6 +18,10 @@ const SOURCE_DIR = path.join(ROOT, "source-data");
 const CACHE_PATH = path.join(ROOT, "data", "geocode-cache.json");
 const OVERRIDES_PATH = path.join(ROOT, "data", "overrides.json");
 const OUTPUT_PATH = path.join(ROOT, "data", "points.json");
+
+const DEFAULT_SHEET_CSV_URL =
+  "https://docs.google.com/spreadsheets/d/1_HM2IEZqsKA0mWlFtFayn4nE3HXzLuFL/export?format=csv&gid=113930569";
+const SHEET_CSV_URL = process.env.SHEET_CSV_URL || DEFAULT_SHEET_CSV_URL;
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const USER_AGENT = "mapa-puntos-dropoff-falabella/1.0 (uso interno, contacto: tmontes30@gmail.com)";
@@ -52,8 +61,10 @@ function normalizeAddressKey(direccion, comuna) {
   return `${direccion}, ${comuna}, Chile`.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-// Columnas fijas del Excel (A..I). Se leen por posición en vez de por nombre
-// de encabezado para evitar problemas de normalización Unicode con tildes.
+// Columnas fijas del Sheet/Excel (A..K). Se leen por posición en vez de por
+// nombre de encabezado para evitar problemas de normalización Unicode con
+// tildes. Lat/Lng son opcionales: si el dueño las completa a mano en el
+// Sheet, se usan directo y se salta la geocodificación para esa fila.
 const COLUMNS = [
   "codigo",
   "nombre",
@@ -64,10 +75,11 @@ const COLUMNS = [
   "referencia",
   "recepcion",
   "activoRaw",
+  "latRaw",
+  "lngRaw",
 ];
 
-function readRows(xlsxPath) {
-  const workbook = XLSX.readFile(xlsxPath);
+function parseSheet(workbook) {
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
   const rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1, range: 1, defval: "" });
@@ -80,6 +92,11 @@ function readRows(xlsxPath) {
       });
       if (!record.codigo || !record.nombre || !record.direccion) return null;
 
+      const latManual = parseFloat(record.latRaw);
+      const lngManual = parseFloat(record.lngRaw);
+      const manualCoords =
+        Number.isFinite(latManual) && Number.isFinite(lngManual) ? { lat: latManual, lng: lngManual } : null;
+
       return {
         codigo: record.codigo,
         nombre: record.nombre,
@@ -90,9 +107,27 @@ function readRows(xlsxPath) {
         referencia: record.referencia,
         recepcion: record.recepcion,
         activo: record.activoRaw.toLowerCase() === "operativo",
+        manualCoords,
       };
     })
     .filter(Boolean);
+}
+
+async function fetchRows() {
+  try {
+    console.log(`Descargando datos desde el Google Sheet (${SHEET_CSV_URL})...`);
+    const res = await fetch(SHEET_CSV_URL);
+    if (!res.ok) throw new Error(`El Sheet respondió ${res.status}`);
+    const csvText = await res.text();
+    const workbook = XLSX.read(csvText, { type: "string" });
+    return parseSheet(workbook);
+  } catch (err) {
+    console.warn(`  ! No se pudo leer el Sheet remoto (${err.message}). Usando source-data/*.xlsx como fallback.`);
+    const xlsxPath = findSourceXlsx();
+    console.log(`Leyendo ${xlsxPath}...`);
+    const workbook = XLSX.readFile(xlsxPath);
+    return parseSheet(workbook);
+  }
 }
 
 async function geocodeQuery(query) {
@@ -135,10 +170,8 @@ async function geocode(direccion, comuna) {
 }
 
 async function main() {
-  const xlsxPath = findSourceXlsx();
-  console.log(`Leyendo ${xlsxPath}...`);
-  const rows = readRows(xlsxPath);
-  console.log(`${rows.length} puntos encontrados en el Excel.`);
+  const rows = await fetchRows();
+  console.log(`${rows.length} puntos encontrados.`);
 
   const cache = loadJson(CACHE_PATH, {});
   const overrides = loadJson(OVERRIDES_PATH, {});
@@ -146,11 +179,13 @@ async function main() {
   const points = [];
   const unresolved = [];
 
-  for (const row of rows) {
+  for (const { manualCoords, ...row } of rows) {
     const key = normalizeAddressKey(row.direccion, row.comuna);
     let coords = null;
 
-    if (overrides[row.codigo]) {
+    if (manualCoords) {
+      coords = manualCoords;
+    } else if (overrides[row.codigo]) {
       coords = overrides[row.codigo];
     } else if (cache[key]) {
       coords = cache[key];

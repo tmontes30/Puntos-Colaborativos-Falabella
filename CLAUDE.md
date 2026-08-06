@@ -17,34 +17,51 @@ acepta cualquier seller o solo el asignado.
 ## Comandos
 
 ```
-npm install          # solo necesario para scripts/generate-data.js (dependencia: xlsx/SheetJS)
-npm run generate-data # regenera data/points.json desde el Excel en source-data/
+npm install           # solo necesario para scripts/generate-data.js (dependencia: xlsx/SheetJS)
+npm run generate-data # regenera data/points.json desde el Google Sheet en vivo (fallback: source-data/*.xlsx)
 npm run serve         # sirve el sitio en http://localhost:8080 (python -m http.server)
 ```
+
+Actualización normal de datos: no es un comando local — se dispara desde
+GitHub Actions (pestaña Actions → "Actualizar datos desde Google Sheets" →
+Run workflow). Ver `.github/workflows/update-data.yml`.
 
 No hay build step para el sitio en sí — es HTML/CSS/JS plano servido directo.
 `npm install` / `generate-data` solo aplican al pipeline de datos.
 
 ## Arquitectura
 
-**Pipeline de datos** (`scripts/generate-data.js`, se corre manualmente, no en CI):
-1. Lee `source-data/*.xlsx` con SheetJS, por **posición de columna** (no por
-   nombre de header) — hubo un bug real donde los headers con tildes no
-   hacían match por un problema de normalización Unicode entre el archivo y
-   el string literal en el código. Ver columnas fijas A–I en `COLUMNS` dentro
-   del script.
-2. Geocodifica cada dirección con Nominatim (OSM), 1 req/seg, cacheado en
+**Pipeline de datos** (`scripts/generate-data.js`, disparado on-demand vía
+GitHub Actions — `workflow_dispatch`, sin cron — o a mano en local):
+1. Descarga el CSV publicado del Google Sheet en vivo del dueño
+   (`DEFAULT_SHEET_CSV_URL` en el script, overridable con la env var
+   `SHEET_CSV_URL`). Si falla la red, cae a `source-data/*.xlsx` como
+   fallback para desarrollo offline.
+2. Parsea por **posición de columna** (no por nombre de header) — hubo un
+   bug real donde los headers con tildes no hacían match por un problema de
+   normalización Unicode entre el archivo y el string literal en el código.
+   Ver columnas fijas A–K en `COLUMNS` dentro del script (las últimas dos,
+   Lat/Lng, son opcionales).
+3. Geocodifica cada dirección con Nominatim (OSM), 1 req/seg, cacheado en
    `data/geocode-cache.json` (se commitea, así reruns son rápidos).
-3. Varias direcciones del Excel vienen con anotaciones sueltas ("Local 21",
-   "N° 184", comuna duplicada al final, etc.) que confunden al geocoder —
+4. Varias direcciones vienen con anotaciones sueltas ("Local 21", "N° 184",
+   comuna duplicada al final, etc.) que confunden al geocoder —
    `cleanAddress()` intenta una versión limpia como fallback antes de
    rendirse.
-4. Lo que sigue sin coordenadas se completa a mano en `data/overrides.json`
-   (clave = Código del punto, ver formato ahí). Esto tiene prioridad sobre el
-   geocode automático.
-5. Escribe `data/points.json` — este archivo es el que consume el sitio
+5. Prioridad de coordenadas por fila: **Lat/Lng completadas a mano en el
+   Sheet** (columnas opcionales al final) → `data/overrides.json` (legacy,
+   sigue funcionando como respaldo) → cache → geocodificar con Nominatim.
+6. Escribe `data/points.json` — este archivo es el que consume el sitio
    directamente (`js/app.js` nunca geocodifica los puntos, solo la dirección
    de bodega que ingresa el usuario, en una sola consulta).
+
+**Automatización** (`.github/workflows/update-data.yml`): solo
+`workflow_dispatch` (botón manual en la pestaña Actions), sin schedule —
+decisión explícita del dueño. Corre `npm run generate-data` y commitea
+`data/points.json` + `data/geocode-cache.json` con el bot de Actions
+(`github-actions[bot]`) solo si hubo diff. La URL del Sheet está
+hardcodeada en el script (no es un secret de GitHub — mismo nivel de
+exposición que el `.xlsx` que ya estaba público en el repo).
 
 **Frontend** (`index.html` + `js/app.js` + `css/style.css`, vanilla JS, sin
 framework, Leaflet vía CDN):
@@ -95,8 +112,17 @@ framework, Leaflet vía CDN):
 
 - Sitio funcional y publicado, con filtros, tema oscuro (UI) + mapa claro,
   pines con logo, y analítica GoatCounter ya integrada y verificada en vivo.
+- Datos: fuente primaria es el Google Sheet en vivo del dueño (ya no el
+  Excel local), actualizable desde GitHub Actions sin tocar el repo a mano.
 - Pendiente: el dueño quiere un dashboard custom (más claro que el de
   GoatCounter) armado con la API de GoatCounter — quedó pausado esperando
   que genere un token de API de solo lectura (Settings → API en su cuenta).
   Cuando lo pase, construir el dashboard bajo demanda (no programado/cron,
   así se decidió), sin dejar el token en el repo ni en el código del sitio.
+- Pendiente: el dueño tiene que agregar las columnas **Lat** y **Lng** al
+  final de su Google Sheet y pegar ahí los 7 valores que hoy están en
+  `data/overrides.json` (PC011, PC020, PC035, PC040, PC043, PC052, PC061) —
+  así el Sheet queda como único lugar a tocar para corregir un pin mal
+  ubicado, sin necesitar acceso al repo. Mientras tanto `overrides.json`
+  sigue funcionando como respaldo, así que el sitio no se rompe si no lo
+  hace.

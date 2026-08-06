@@ -16,29 +16,46 @@ ordenados por distancia aproximada.
 - El mapa usa [Leaflet](https://leafletjs.com/) + tiles de OpenStreetMap,
   sin necesidad de API key.
 
-## Actualizar los datos cuando cambie el Excel/Sheet
+## Actualizar los datos (flujo normal: editar el Google Sheet)
 
-1. Reemplaza el archivo en `source-data/` por la versión actualizada del
-   Excel (debe mantener las mismas columnas: Codigo, Punto colaborativo,
-   Operación, Dirección, Comuna, Hora entrega, Referencia, Recepción, Activo).
-2. Instala dependencias si es la primera vez: `npm install`
-3. Corre el generador de datos:
-   ```
-   npm run generate-data
-   ```
-   Esto geocodifica cada dirección nueva (respetando el límite de 1
-   solicitud/segundo de Nominatim) y escribe `data/points.json`. Las
-   direcciones ya conocidas se toman del cache (`data/geocode-cache.json`),
-   así que reprocesar el archivo es rápido.
-4. Si el script reporta puntos sin coordenadas al final, búscalos
-   manualmente (por ejemplo en Google Maps) y agrégalos a
-   `data/overrides.json` con su Código:
-   ```json
-   { "PC099": { "lat": -33.4489, "lng": -70.6693 } }
-   ```
-   Luego vuelve a correr `npm run generate-data`.
-5. Commitea los cambios en `data/points.json`, `data/geocode-cache.json` y
-   `data/overrides.json` (si aplica) y haz push.
+Los puntos viven en un Google Sheet en vivo (no hace falta tocar este repo
+para actualizarlos):
+
+1. Edita el Sheet normalmente (agregar/quitar puntos, cambiar horarios,
+   comuna, etc.) — mismas columnas de siempre: Codigo, Punto colaborativo,
+   Operación, Dirección, Comuna, Hora entrega, Referencia, Recepción, Activo.
+   Dos columnas opcionales más al final, **Lat** y **Lng**: si las completas
+   a mano para un punto, el sitio usa esas coordenadas directo y se salta la
+   geocodificación automática para esa fila (útil cuando el geocodificador
+   ubica mal una dirección poco común).
+2. Entra a la pestaña **Actions** de este repo en GitHub →
+   **"Actualizar datos desde Google Sheets"** → botón **"Run workflow"**.
+3. Espera ~1 minuto. El workflow lee el Sheet, geocodifica lo que haga
+   falta, y commitea `data/points.json` automáticamente si hubo cambios.
+   GitHub Pages se re-despliega solo después de ese commit.
+
+No hay actualización automática por horario/cron a propósito — se dispara
+solo cuando lo corres manualmente desde Actions.
+
+### Correr el generador a mano (debug / desarrollo local)
+
+```
+npm install               # solo la primera vez (dependencia: xlsx/SheetJS)
+npm run generate-data
+```
+
+Esto lee el mismo Sheet en vivo (URL configurada como constante en
+`scripts/generate-data.js`, con `source-data/*.xlsx` como fallback si no hay
+red) y regenera `data/points.json`. Las direcciones ya geocodificadas se
+toman del cache (`data/geocode-cache.json`), así que reprocesar es rápido.
+
+Si el script reporta puntos sin coordenadas al final, la forma recomendada
+de arreglarlo es completar **Lat/Lng directamente en el Sheet** (ver arriba).
+Alternativamente, `data/overrides.json` sigue funcionando como respaldo
+(clave = Código del punto):
+```json
+{ "PC099": { "lat": -33.4489, "lng": -70.6693 } }
+```
 
 ## Correr el sitio en local
 
