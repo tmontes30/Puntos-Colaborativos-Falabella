@@ -449,7 +449,7 @@
     "comuna": "Santiago",
     "horario": "11:00 a 14:00",
     "referencia": "Para el ingreso de los Sellers, este será por Santo Domingo 1032, golpear la cortina para la apertura de ésta. Cómo referencia, al costado izquierdo de la cortina está la puerta de metal de ingreso personal de la tienda.",
-    "recepcion": "Solo seller asignados al punto",
+    "recepcion": "Solo pueden ingresar sellers que solicitaron el acceso por ticket.",
     "activo": true,
     "lat": -33.4363285,
     "lng": -70.6517568
@@ -501,7 +501,7 @@
     "comuna": "Viña Del Mar",
     "horario": "09:00 a 12:30",
     "referencia": "",
-    "recepcion": "Solo seller asignados al punto",
+    "recepcion": "Solo pueden ingresar sellers que solicitaron el acceso por ticket.",
     "activo": true,
     "lat": -33.0292801,
     "lng": -71.5624447

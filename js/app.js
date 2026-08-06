@@ -30,11 +30,16 @@
   const bodegaSubmit = document.getElementById("bodega-submit");
   const bodegaStatus = document.getElementById("bodega-status");
   const itemTemplate = document.getElementById("point-item-template");
+  const legendTicket = document.getElementById("legend-ticket");
 
   function trackEvent(path) {
     if (window.goatcounter && typeof window.goatcounter.count === "function") {
       window.goatcounter.count({ path, event: true });
     }
+  }
+
+  function requiereTicket(point) {
+    return /ticket/i.test(point.recepcion || "");
   }
 
   function abiertoSabado(diasStr) {
@@ -62,9 +67,10 @@
   }
 
   function popupHtml(point) {
-    const esRestringido = /solo seller/i.test(point.recepcion);
+    const ticket = requiereTicket(point);
+    const esRestringido = /solo seller/i.test(point.recepcion) || ticket;
     return `
-      <div class="popup-title">${escapeHtml(point.nombre)}</div>
+      <div class="popup-title">${escapeHtml(point.nombre)}${ticket ? " *" : ""}</div>
       <div class="popup-row"><strong>Código:</strong> ${escapeHtml(point.codigo)}</div>
       <div class="popup-row"><strong>Dirección:</strong> ${escapeHtml(point.direccion)}, ${escapeHtml(point.comuna)}</div>
       ${point.referencia ? `<div class="popup-row"><strong>Referencia:</strong> ${escapeHtml(point.referencia)}</div>` : ""}
@@ -107,7 +113,7 @@
     state.points.forEach((point) => {
       if (point.lat == null || point.lng == null) return;
       const marker = L.marker([point.lat, point.lng], {
-        icon: point.activo ? pointIcon : pointIconInactive,
+        icon: point.activo && !requiereTicket(point) ? pointIcon : pointIconInactive,
       }).addTo(map);
       marker.bindPopup(popupHtml(point));
       marker.on("click", () => trackEvent(`/event/punto/${point.codigo}`));
@@ -152,8 +158,9 @@
 
     points.forEach((point) => {
       const li = itemTemplate.content.firstElementChild.cloneNode(true);
-      li.classList.toggle("is-inactive", !point.activo);
-      li.querySelector(".point-item__nombre").textContent = point.nombre;
+      const ticket = requiereTicket(point);
+      li.classList.toggle("is-inactive", !point.activo || ticket);
+      li.querySelector(".point-item__nombre").textContent = point.nombre + (ticket ? " *" : "");
       li.querySelector(".point-item__direccion").textContent = point.direccion;
       li.querySelector(".point-item__comuna").textContent = point.comuna;
       const distEl = li.querySelector(".point-item__distancia");
@@ -268,6 +275,7 @@
 
     buildMarkers();
     populateComunaFilter();
+    legendTicket.hidden = !state.points.some(requiereTicket);
     refresh();
 
     const savedAddress = localStorage.getItem(BODEGA_STORAGE_KEY);
