@@ -61,52 +61,104 @@ function normalizeAddressKey(direccion, comuna) {
   return `${direccion}, ${comuna}, Chile`.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-// Columnas fijas del Sheet/Excel (A..K). Se leen por posición en vez de por
-// nombre de encabezado para evitar problemas de normalización Unicode con
-// tildes. Lat/Lng son opcionales: si el dueño las completa a mano en el
-// Sheet, se usan directo y se salta la geocodificación para esa fila.
-const COLUMNS = [
+// Columnas identificadas por palabras clave en el encabezado, no por
+// posición fija ni por nombre exacto — el Sheet real ya cambió de orden y de
+// nombres una vez ("Codigo" -> "Codigo Punto Colab", etc.), así que esto
+// tiene que sobrevivir a reordenamientos/renombrados razonables sin tocar
+// código. Se evalúan en orden y la primera que matchea gana la columna
+// (evita que "Codigo Punto Colab" se cuele como "nombre" antes que "codigo").
+// Normalización de Unicode (tildes) incluida — el match por nombre exacto
+// falló antes por eso.
+const FIELD_PATTERNS = [
+  { field: "codigo", test: (h) => h.includes("codigo") },
+  { field: "nombre", test: (h) => h.includes("nombre") || h.includes("punto colaborativo") },
+  { field: "direccion", test: (h) => h.includes("direccion") },
+  { field: "comuna", test: (h) => h.includes("comuna") },
+  { field: "referencia", test: (h) => h.includes("referencia") },
+  { field: "horario", test: (h) => h.includes("hora") },
+  { field: "dias", test: (h) => h.includes("operacion") || h.includes("dias") },
+  { field: "recepcion", test: (h) => h.includes("recepcion") },
+  { field: "activoRaw", test: (h) => h.includes("activo") },
+  { field: "latRaw", test: (h) => h === "lat" || h.includes("latitud") },
+  { field: "lngRaw", test: (h) => h === "lng" || h === "lon" || h.includes("longitud") },
+];
+
+const REQUIRED_FIELDS = [
   "codigo",
   "nombre",
-  "dias",
   "direccion",
   "comuna",
   "horario",
   "referencia",
   "recepcion",
   "activoRaw",
-  "latRaw",
-  "lngRaw",
 ];
+
+function normalizeHeader(str) {
+  return String(str ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function detectColumns(headerRow) {
+  const columnIndexByField = {};
+  headerRow.forEach((rawHeader, i) => {
+    const normalized = normalizeHeader(rawHeader);
+    const pattern = FIELD_PATTERNS.find((p) => p.test(normalized));
+    if (pattern && !(pattern.field in columnIndexByField)) {
+      columnIndexByField[pattern.field] = i;
+    }
+  });
+
+  const missing = REQUIRED_FIELDS.filter((f) => !(f in columnIndexByField));
+  if (missing.length) {
+    throw new Error(
+      `No se pudieron identificar estas columnas en el Sheet: ${missing.join(", ")}. ` +
+        `Encabezados encontrados: ${headerRow.map((h) => `"${h}"`).join(", ")}. ` +
+        `Revisa scripts/generate-data.js (FIELD_PATTERNS) si el Sheet cambió de nombres.`
+    );
+  }
+  return columnIndexByField;
+}
 
 function parseSheet(workbook) {
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
-  const rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1, range: 1, defval: "" });
+  const rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+  if (!rawRows.length) return [];
+
+  const columnIndexByField = detectColumns(rawRows[0]);
+  const get = (cells, field) => {
+    const i = columnIndexByField[field];
+    return i == null ? "" : String(cells[i] ?? "").trim();
+  };
 
   return rawRows
+    .slice(1)
     .map((cells) => {
-      const record = {};
-      COLUMNS.forEach((key, i) => {
-        record[key] = String(cells[i] ?? "").trim();
-      });
-      if (!record.codigo || !record.nombre || !record.direccion) return null;
+      const codigo = get(cells, "codigo");
+      const nombre = get(cells, "nombre");
+      const direccion = get(cells, "direccion");
+      if (!codigo || !nombre || !direccion) return null;
 
-      const latManual = parseFloat(record.latRaw);
-      const lngManual = parseFloat(record.lngRaw);
+      const comuna = get(cells, "comuna");
+      const latManual = parseFloat(get(cells, "latRaw"));
+      const lngManual = parseFloat(get(cells, "lngRaw"));
       const manualCoords =
         Number.isFinite(latManual) && Number.isFinite(lngManual) ? { lat: latManual, lng: lngManual } : null;
 
       return {
-        codigo: record.codigo,
-        nombre: record.nombre,
-        dias: record.dias,
-        direccion: record.direccion,
-        comuna: record.comuna ? titleCase(record.comuna) : "",
-        horario: record.horario,
-        referencia: record.referencia,
-        recepcion: record.recepcion,
-        activo: record.activoRaw.toLowerCase() === "operativo",
+        codigo,
+        nombre,
+        dias: get(cells, "dias"),
+        direccion,
+        comuna: comuna ? titleCase(comuna) : "",
+        horario: get(cells, "horario"),
+        referencia: get(cells, "referencia"),
+        recepcion: get(cells, "recepcion"),
+        activo: get(cells, "activoRaw").toLowerCase() === "operativo",
         manualCoords,
       };
     })

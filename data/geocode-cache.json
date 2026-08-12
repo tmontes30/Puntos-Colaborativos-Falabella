@@ -237,5 +237,13 @@
   "providencia 2169 local 01, providencia, chile": {
     "lat": -33.4226409,
     "lng": -70.6101636
+  },
+  "el bosque 035, buin, chile": {
+    "lat": -33.7236389,
+    "lng": -70.7388996
+  },
+  "el trebol 1256, padre hurtado, chile": {
+    "lat": -33.5682049,
+    "lng": -70.7928619
   }
 }
