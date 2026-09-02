@@ -249,5 +249,21 @@
   "av. camilo henriquez 3693, puente alto, chile": {
     "lat": -33.5604607,
     "lng": -70.557174
+  },
+  "josé ananías 700, macul, chile": {
+    "lat": -33.479029,
+    "lng": -70.6196494
+  },
+  "10 norte 882, viña del mar, chile": {
+    "lat": -33.0137396,
+    "lng": -71.5472596
+  },
+  "mapocho 3942, quinta normal, chile": {
+    "lat": -33.4325487,
+    "lng": -70.6889424
+  },
+  "av vitacura 3664, vitacura, chile": {
+    "lat": -33.4026501,
+    "lng": -70.5954391
   }
 }

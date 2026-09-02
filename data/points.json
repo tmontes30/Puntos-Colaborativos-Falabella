@@ -639,7 +639,7 @@
   {
     "codigo": "PC062",
     "nombre": "Dropoff Bazar el Sol",
-    "dias": "Lunes a Sábado",
+    "dias": "Lunes a Viernes",
     "direccion": "Pular 28",
     "comuna": "Lampa",
     "horario": "11:00 a 12:00",
@@ -691,7 +691,7 @@
   {
     "codigo": "PC066",
     "nombre": "Dropoff Mall plaza Tobalaba",
-    "dias": "Lunes a Sábado",
+    "dias": "Lunes a Viernes",
     "direccion": "AV. CAMILO HENRIQUEZ 3693",
     "comuna": "Puente Alto",
     "horario": "10:00 a 12:00",
@@ -700,5 +700,57 @@
     "activo": true,
     "lat": -33.5604607,
     "lng": -70.557174
+  },
+  {
+    "codigo": "PC067",
+    "nombre": "Dropoff MOVE UP",
+    "dias": "Lunes a Viernes",
+    "direccion": "José Ananías 700",
+    "comuna": "Macul",
+    "horario": "10:00 a 12:00",
+    "referencia": "",
+    "recepcion": "Cualquier seller asignado a punto colaborativo falabella",
+    "activo": true,
+    "lat": -33.479029,
+    "lng": -70.6196494
+  },
+  {
+    "codigo": "PC068",
+    "nombre": "Dropoff Espacio3s",
+    "dias": "Lunes a Viernes",
+    "direccion": "10 Norte 882",
+    "comuna": "Viña Del Mar",
+    "horario": "09:30 a 12:00",
+    "referencia": "",
+    "recepcion": "Cualquier seller asignado a punto colaborativo falabella",
+    "activo": true,
+    "lat": -33.0137396,
+    "lng": -71.5472596
+  },
+  {
+    "codigo": "PC069",
+    "nombre": "Dropoff Tekno Kont Chile",
+    "dias": "Lunes a Viernes",
+    "direccion": "Mapocho 3942",
+    "comuna": "Quinta Normal",
+    "horario": "09:00 a 12:00",
+    "referencia": "",
+    "recepcion": "Cualquier seller asignado a punto colaborativo falabella",
+    "activo": true,
+    "lat": -33.4325487,
+    "lng": -70.6889424
+  },
+  {
+    "codigo": "PC070",
+    "nombre": "Dropoff Siete Mares",
+    "dias": "Lunes a Viernes",
+    "direccion": "Av Vitacura 3664",
+    "comuna": "Vitacura",
+    "horario": "11:00 a 12:00",
+    "referencia": "",
+    "recepcion": "Cualquier seller asignado a punto colaborativo falabella",
+    "activo": true,
+    "lat": -33.4026501,
+    "lng": -70.5954391
   }
 ]
